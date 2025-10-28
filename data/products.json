@@ -1,0 +1,13 @@
+[
+  {
+    "id": 1,
+    "title": "Producto de ejemplo",
+    "description": "Este es un producto de ejemplo.",
+    "code": "P001",
+    "price": 50,
+    "status": true,
+    "stock": 100,
+    "category": "Electrónica",
+    "thumbnails": ["imagen1.jpg"]
+  }
+]
