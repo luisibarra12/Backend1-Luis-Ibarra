@@ -1,57 +1,80 @@
-const fs = require('fs');
-const path = require('path');
-const productsFilePath = path.join(__dirname, '../data/products.json');
+const fs = require("fs");
+const path = require("path");
 
 class ProductManager {
-  static getAllProducts() {
-    let productsData = [];
+  constructor(filePath) {
+    this.filePath = filePath;
+  }
 
+  // Obtener todo
+  async getProducts() {
     try {
-      // Leer el archivo y parsearlo
-      const data = fs.readFileSync(productsFilePath, 'utf-8');
-      if (data) {
-        productsData = JSON.parse(data); // Si no está vacío, parseamos los datos
+      if (!fs.existsSync(this.filePath)) {
+        return [];
       }
+
+      const data = await fs.promises.readFile(this.filePath, "utf-8");
+      return data ? JSON.parse(data) : [];
     } catch (error) {
-      console.error("Error al leer o parsear el archivo products.json:", error);
-      // Si hay un error, devolvemos un arreglo vacío
+      console.error("Error al leer products.json:", error);
+      return [];
     }
-
-    return productsData; // Siempre devolvemos un arreglo (vacío o con datos)
   }
 
-  static getProductById(id) {
-    const products = this.getAllProducts();
-    return products.find(product => product.id === id);
+  // Obtener por ID
+  async getProductById(id) {
+    const products = await this.getProducts();
+    return products.find((p) => p.id === id);
   }
 
-  static addProduct(product) {
-    const products = this.getAllProducts();
-    product.id = this.generateId(products);
-    products.push(product);
-    fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2));
-    return product;
+  // Agregar
+  async addProduct(product) {
+    const products = await this.getProducts();
+
+    const newProduct = {
+      id: products.length > 0 ? products[products.length - 1].id + 1 : 1,
+      ...product,
+    };
+
+    products.push(newProduct);
+
+    await fs.promises.writeFile(
+      this.filePath,
+      JSON.stringify(products, null, 2)
+    );
+
+    return newProduct;
   }
 
-  static updateProduct(id, updatedFields) {
-    const products = this.getAllProducts();
-    const productIndex = products.findIndex(product => product.id === id);
-    if (productIndex === -1) return null;
-    const updatedProduct = { ...products[productIndex], ...updatedFields };
-    products[productIndex] = updatedProduct;
-    fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2));
-    return updatedProduct;
+  // Actualizar
+  async updateProduct(id, updatedFields) {
+    const products = await this.getProducts();
+    const index = products.findIndex((p) => p.id === id);
+
+    if (index === -1) return null;
+
+    products[index] = { ...products[index], ...updatedFields };
+
+    await fs.promises.writeFile(
+      this.filePath,
+      JSON.stringify(products, null, 2)
+    );
+
+    return products[index];
   }
 
-  static deleteProduct(id) {
-    let products = this.getAllProducts();
-    products = products.filter(product => product.id !== id);
-    fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2));
+  // Eliminar
+  async deleteProduct(id) {
+    let products = await this.getProducts();
+
+    products = products.filter((p) => p.id !== id);
+
+    await fs.promises.writeFile(
+      this.filePath,
+      JSON.stringify(products, null, 2)
+    );
+
     return true;
-  }
-
-  static generateId(products) {
-    return products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
   }
 }
 

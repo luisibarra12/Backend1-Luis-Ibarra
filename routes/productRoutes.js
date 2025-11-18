@@ -1,45 +1,53 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const ProductManager = require('../managers/ProductManager');
+const path = require("path");
+
+const ProductManager = require("../managers/ProductManager");
+const productManager = new ProductManager(
+  path.join(__dirname, "..", "data", "products.json")
+);
 
 // Obtener todos los productos
-router.get('/', (req, res) => {
-  const products = ProductManager.getAllProducts();
+router.get("/", async (req, res) => {
+  const products = await productManager.getProducts();
   res.json(products);
 });
 
-// Obtener un producto por id
-router.get('/:pid', (req, res) => {
-  const product = ProductManager.getProductById(parseInt(req.params.pid));
+// Obtener producto por ID
+router.get("/:pid", async (req, res) => {
+  const id = parseInt(req.params.pid);
+  const product = await productManager.getProductById(id);
+
   if (!product) {
-    return res.status(404).json({ error: 'Producto no encontrado' });
+    return res.status(404).json({ error: "Producto no encontrado" });
   }
+
   res.json(product);
 });
 
-// Crear un producto
-router.post('/', (req, res) => {
-  const newProduct = req.body;
-  const createdProduct = ProductManager.addProduct(newProduct);
-  res.status(201).json(createdProduct);
+// Crear producto
+router.post("/", async (req, res) => {
+  const newProduct = await productManager.addProduct(req.body);
+  res.status(201).json(newProduct);
 });
 
-// Actualizar un producto
-router.put('/:pid', (req, res) => {
-  const updatedProduct = req.body;
-  const product = ProductManager.updateProduct(parseInt(req.params.pid), updatedProduct);
-  if (!product) {
-    return res.status(404).json({ error: 'Producto no encontrado' });
+// Actualizar producto
+router.put("/:pid", async (req, res) => {
+  const id = parseInt(req.params.pid);
+
+  const updated = await productManager.updateProduct(id, req.body);
+  if (!updated) {
+    return res.status(404).json({ error: "Producto no encontrado" });
   }
-  res.json(product);
+
+  res.json(updated);
 });
 
-// Eliminar un producto
-router.delete('/:pid', (req, res) => {
-  const success = ProductManager.deleteProduct(parseInt(req.params.pid));
-  if (!success) {
-    return res.status(404).json({ error: 'Producto no encontrado' });
-  }
+// Eliminar producto
+router.delete("/:pid", async (req, res) => {
+  const id = parseInt(req.params.pid);
+
+  await productManager.deleteProduct(id);
   res.status(204).send();
 });
 
